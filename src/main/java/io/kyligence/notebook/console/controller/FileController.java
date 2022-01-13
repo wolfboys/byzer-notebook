@@ -144,6 +144,7 @@ public class FileController {
         Integer id = Integer.valueOf(cloneExecFileReq.getId());
         String type = cloneExecFileReq.getType();
         String user = WebUtils.getCurrentLoginUser();
+        String commitId = cloneExecFileReq.getCommitId();
 
         execFileService = getService(type);
         execFileService.checkResourceLimit(user, 1);
@@ -154,7 +155,7 @@ public class FileController {
             throw new ByzerException(ErrorCodeEnum.FILE_ALREADY_EXIST);
         }
 
-        ExecFileDTO execFile = getExecFile(id, user, type);
+        ExecFileDTO execFile = getExecFile(id, user, type, commitId);
         execFile.setName(cloneExecFileReq.getName());
         ExecFileInfo newExecFile = execFileService.importExecFile(execFile, execFileInfo.getFolderId());
 
@@ -242,10 +243,12 @@ public class FileController {
     @GetMapping("/file/export/{id}")
     @Permission
     @SneakyThrows
-    public void exportNotebook(@PathVariable("id") Integer execFileId, @RequestParam("type") String type, HttpServletResponse response) {
+    public void exportNotebook(@PathVariable("id") Integer execFileId, @RequestParam("type") String type,
+                               @RequestParam(value = "commit_id", required = false) String commitId,
+                               HttpServletResponse response) {
         String extName = getExtension(type);
         String user = WebUtils.getCurrentLoginUser();
-        ExecFileDTO execFileDTO = getExecFile(execFileId, user, type);
+        ExecFileDTO execFileDTO = getExecFile(execFileId, user, type, commitId);
 
         String fileName = String.format(Locale.ROOT, "%s_%s", execFileDTO.getName(),
                 new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault(Locale.Category.FORMAT)).format(new Date()));
@@ -321,11 +324,11 @@ public class FileController {
         }
     }
 
-    private ExecFileDTO getExecFile(Integer execFileId, String user, String type) {
+    private ExecFileDTO getExecFile(Integer execFileId, String user, String type, String commitId) {
         if (type.equals("notebook")) {
-            return notebookService.getNotebook(execFileId, user);
+            return notebookService.getNotebook(execFileId, user, commitId);
         } else if (type.equals("workflow")) {
-            return workflowService.getWorkflow(execFileId, user);
+            return workflowService.getWorkflow(execFileId, user, commitId);
         } else {
             throw new ByzerException(ErrorCodeEnum.NO_SUCH_TYPE);
         }

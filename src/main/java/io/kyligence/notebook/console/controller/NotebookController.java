@@ -5,6 +5,7 @@ import io.kyligence.notebook.console.bean.dto.req.CodeSuggestionReq;
 import io.kyligence.notebook.console.bean.dto.req.CreateCellReq;
 import io.kyligence.notebook.console.bean.dto.req.SaveNotebookReq;
 import io.kyligence.notebook.console.bean.entity.CellInfo;
+import io.kyligence.notebook.console.bean.entity.NotebookCommit;
 import io.kyligence.notebook.console.bean.entity.NotebookInfo;
 import io.kyligence.notebook.console.exception.ByzerException;
 import io.kyligence.notebook.console.exception.ErrorCodeEnum;
@@ -99,7 +100,8 @@ public class NotebookController {
     @ApiOperation("Get Notebook Content")
     @GetMapping("/notebook/{id}")
     @Permission
-    public Response<NotebookDTO> get(@PathVariable("id") @NotNull Integer id) {
+    public Response<NotebookDTO> get(@PathVariable("id") @NotNull Integer id,
+                                     @RequestParam(value = "commit_id", required = false) String commitId) {
         String user = WebUtils.getCurrentLoginUser();
         NotebookDTO notebookDTO = notebookService.getNotebook(id, user);
         return new Response<NotebookDTO>().data(notebookDTO);
@@ -218,16 +220,20 @@ public class NotebookController {
     @ApiOperation("Get User Default Notebook")
     @GetMapping("/notebook/default")
     @Permission
-    public Response<IdNameTypeDTO> getDefaultNotebook() {
-        String user = WebUtils.getCurrentLoginUser();
-        NotebookInfo notebookInfo = notebookService.getDefault(user);
+    public Response<DemoInfoDTO> getDefaultNotebook() {
+        NotebookCommit notebookCommit = notebookService.getDefaultDemo();
 
-        if (notebookInfo == null) {
+        if (notebookCommit == null) {
             return new Response<>();
         }
 
-        return new Response<IdNameTypeDTO>().data(
-                IdNameTypeDTO.valueOf(notebookInfo.getId(), notebookInfo.getName(), "notebook"));
+        return new Response<DemoInfoDTO>().data(
+                DemoInfoDTO.valueOf(
+                        notebookCommit.getNotebookId(),
+                        notebookCommit.getName(),
+                        "notebook",
+                        notebookCommit.getCommitId()
+                ));
     }
 
     @ApiOperation("Create Sample Notebook")
@@ -250,5 +256,14 @@ public class NotebookController {
     public Response<List<CodeSuggestDTO>> getCodeSuggestion(@RequestBody CodeSuggestionReq suggestionReq) {
         List<CodeSuggestDTO> suggestionDTOS = notebookService.getCodeSuggestion(suggestionReq);
         return new Response<List<CodeSuggestDTO>>().data(suggestionDTOS);
+    }
+
+    @ApiOperation("Commit Notebook")
+    @PostMapping("/notebook/{id}/commit")
+    @Permission
+    public Response<String> commit(@PathVariable("id") @NotNull Integer notebookId){
+        String user = WebUtils.getCurrentLoginUser();
+        NotebookCommit commit = notebookService.commit(user, notebookId);
+        return new Response<String>().data(commit.getCommitId());
     }
 }
