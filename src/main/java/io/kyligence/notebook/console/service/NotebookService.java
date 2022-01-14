@@ -205,11 +205,17 @@ public class NotebookService implements FileInterface {
         if (schedulerService.entityUsedInSchedule("notebook", id)) {
             throw new ByzerException("Notebook used in schedule");
         }
+
+        if (isDemo(id)) {
+            throw new ByzerException("Notebook has been shared with other users");
+        }
+
         // 1. delete notebook info
         notebookRepository.deleteById(id);
-
+        notebookCommitRepository.deleteByNotebook(id);
         // 2. delete notebook cells
         cellInfoRepository.deleteByNotebook(id);
+        cellCommitRepository.deleteByNotebook(id);
     }
 
     public List<NotebookInfo> find(String user) {

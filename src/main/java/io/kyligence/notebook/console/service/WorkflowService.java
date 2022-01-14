@@ -413,8 +413,13 @@ public class WorkflowService implements FileInterface {
     @Override
     @Transactional
     public void delete(Integer workflowId) {
+        if (isDemo(workflowId)) {
+            throw new ByzerException("Workflow has been shared with other users");
+        }
         workflowRepository.deleteById(workflowId);
+        workflowCommitRepository.deleteByWorkflow(workflowId);
         nodeInfoRepository.deleteByWorkflow(workflowId);
+        nodeCommitRepository.deleteByWorkflow(workflowId);
         modelInfoRepository.deleteByWorkflowId(workflowId);
     }
 
