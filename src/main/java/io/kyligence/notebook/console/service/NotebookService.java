@@ -91,7 +91,7 @@ public class NotebookService implements FileInterface {
     @Transactional
     public NotebookCommit commit(String user, Integer notebookId) {
         NotebookInfo notebookInfo = this.findById(notebookId);
-        checkExecFileAvailable(user, notebookInfo);
+        checkExecFileAvailable(user, notebookInfo, null);
 
         String commitId = UUID.randomUUID().toString();
         long timestamp = System.currentTimeMillis();
@@ -121,6 +121,12 @@ public class NotebookService implements FileInterface {
         );
 
         return notebookCommit;
+    }
+
+    public List<NotebookCommit> listCommits(String user, Integer notebookId){
+        NotebookInfo notebookInfo = this.findById(notebookId);
+        checkExecFileAvailable(user, notebookInfo, null);
+        return notebookCommitRepository.listCommit(notebookId);
     }
 
     public void deleteCell(CellInfo cellInfo) {
@@ -230,17 +236,22 @@ public class NotebookService implements FileInterface {
         return !sharedFileRepository.findByEntity("admin", notebookId, "notebook").isEmpty();
     }
 
+    private boolean isDemo(Integer notebookId, String commitId) {
+        return !sharedFileRepository.findByCommit("admin", notebookId, "notebook", commitId).isEmpty();
+    }
+
     @Override
-    public void checkExecFileAvailable(String user, ExecFileInfo execFileInfo) {
+    public void checkExecFileAvailable(String user, ExecFileInfo execFileInfo, String commitId) {
         if (execFileInfo == null) {
             throw new ByzerException(ErrorCodeEnum.NOTEBOOK_NOT_EXIST);
         }
-        if (isDemo(execFileInfo.getId())) return;
+        // user can access demo commits
+        if (Objects.nonNull(commitId) && !commitId.isEmpty() && isDemo(execFileInfo.getId(), commitId)) return;
+
         if (!user.equalsIgnoreCase(execFileInfo.getUser()) && !user.equalsIgnoreCase("admin")) {
             throw new ByzerException(ErrorCodeEnum.NOTEBOOK_NOT_AVAILABLE);
         }
     }
-
 
     @Override
     public boolean isExecFileExist(String user, String name, Integer folderId) {
@@ -264,7 +275,7 @@ public class NotebookService implements FileInterface {
 
     public NotebookDTO getNotebook(Integer notebookId, String user) {
         NotebookInfo notebookInfo = this.findById(notebookId);
-        checkExecFileAvailable(user, notebookInfo);
+        checkExecFileAvailable(user, notebookInfo, null);
 
         List<Integer> cellIds = null;
         List<CellInfo> cellInfos = null;
@@ -274,18 +285,23 @@ public class NotebookService implements FileInterface {
             // get notebook cells
             cellInfos = this.getCellInfos(notebookId);
         }
-
         NotebookDTO dto = NotebookDTO.valueOf(notebookInfo, cellIds, cellInfos);
-        if (isDemo(notebookId)) dto.setIsDemo(true);
+
+        if (user.equalsIgnoreCase("admin") && isDemo(notebookId)) {
+            dto.setIsDemo(true);
+        }
+
         return dto;
     }
 
     public NotebookDTO getNotebook(Integer notebookId, String user, String commitId) {
-        NotebookInfo notebookInfo = this.findById(notebookId);
-        checkExecFileAvailable(user, notebookInfo);
         if (Objects.isNull(commitId) || commitId.isEmpty()) {
             return getNotebook(notebookId, user);
         }
+
+        NotebookInfo notebookInfo = this.findById(notebookId);
+        checkExecFileAvailable(user, notebookInfo, commitId);
+
         NotebookCommit notebookCommit = findCommit(notebookId, commitId);
 
         List<Integer> cellIds = null;
@@ -298,7 +314,7 @@ public class NotebookService implements FileInterface {
         }
 
         NotebookDTO dto = NotebookDTO.valueOf(notebookInfo, cellIds, notebookCommit, cellInfos);
-        if (isDemo(notebookId)) dto.setIsDemo(true);
+        if (isDemo(notebookId, commitId)) dto.setIsDemo(true);
         return dto;
     }
 
@@ -338,8 +354,8 @@ public class NotebookService implements FileInterface {
         return codeSuggests;
     }
 
-    public String getNotebookScripts(String user, Integer notebookId, Map<String, String> options) {
-        NotebookDTO notebook = getNotebook(notebookId, user);
+    public String getNotebookScripts(String user, Integer notebookId, String commitId, Map<String, String> options) {
+        NotebookDTO notebook = getNotebook(notebookId, user, commitId);
         List<String> scripts = notebook.getCellList().stream().map(CellInfoDTO::getContent)
                 .filter(sql -> Objects.nonNull(sql) && !sql.startsWith("-- Markdown")).map(sql -> HintManager.applyHintRewrite(sql, options))
                 .collect(Collectors.toList());

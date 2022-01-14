@@ -103,7 +103,7 @@ public class NotebookController {
     public Response<NotebookDTO> get(@PathVariable("id") @NotNull Integer id,
                                      @RequestParam(value = "commit_id", required = false) String commitId) {
         String user = WebUtils.getCurrentLoginUser();
-        NotebookDTO notebookDTO = notebookService.getNotebook(id, user);
+        NotebookDTO notebookDTO = notebookService.getNotebook(id, user, commitId);
         return new Response<NotebookDTO>().data(notebookDTO);
     }
 
@@ -168,7 +168,7 @@ public class NotebookController {
     public Response<IdNameDTO> delCell(@PathVariable("notebookId") @NotNull Integer notebookId) {
         String user = WebUtils.getCurrentLoginUser();
         NotebookInfo notebookInfo = notebookService.findById(notebookId);
-        notebookService.checkExecFileAvailable(user, notebookInfo);
+        notebookService.checkExecFileAvailable(user, notebookInfo, null);
 
         List<CellInfo> cells = notebookService.getCellInfos(notebookId);
         if (cells != null) {

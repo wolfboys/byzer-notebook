@@ -80,7 +80,7 @@ public class FileController {
         execFileService = getService(type);
 
         ExecFileInfo execFileInfo = execFileService.findById(execFileId);
-        execFileService.checkExecFileAvailable(user, execFileInfo);
+        execFileService.checkExecFileAvailable(user, execFileInfo, null);
 
         // delete duplicate notebook in target folder
         ExecFileInfo origin = execFileService.find(user, execFileInfo.getName(), folderId);
@@ -122,7 +122,7 @@ public class FileController {
 
         execFileService = getService(type);
         ExecFileInfo execFileInfo = execFileService.findById(execFileId);
-        execFileService.checkExecFileAvailable(user, execFileInfo);
+        execFileService.checkExecFileAvailable(user, execFileInfo, null);
 
         String name = execFileInfo.getName();
         String rename = renameExecFileReq.getName();
@@ -149,7 +149,7 @@ public class FileController {
         execFileService = getService(type);
         execFileService.checkResourceLimit(user, 1);
         ExecFileInfo execFileInfo = execFileService.findById(id);
-        execFileService.checkExecFileAvailable(user, execFileInfo);
+        execFileService.checkExecFileAvailable(user, execFileInfo, commitId);
 
         if (execFileService.isExecFileExist(user, cloneExecFileReq.getName(), execFileInfo.getFolderId())) {
             throw new ByzerException(ErrorCodeEnum.FILE_ALREADY_EXIST);
@@ -169,7 +169,7 @@ public class FileController {
         execFileService = getService(type);
         String user = WebUtils.getCurrentLoginUser();
         ExecFileInfo execFileInfo = execFileService.findById(id);
-        execFileService.checkExecFileAvailable(user, execFileInfo);
+        execFileService.checkExecFileAvailable(user, execFileInfo, null);
 
         execFileService.delete(id);
         return new Response<IdDTO>().data(IdDTO.valueOf(id));

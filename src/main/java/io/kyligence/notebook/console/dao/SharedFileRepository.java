@@ -18,6 +18,9 @@ public interface SharedFileRepository extends JpaRepository<SharedFileInfo, Inte
     @Query(value = "select * from shared_file where entity_id = ?2 and entity_type = ?3 and owner = ?1", nativeQuery = true)
     List<SharedFileInfo> findByEntity(String owner, Integer entityId, String entityType);
 
+    @Query(value = "select * from shared_file where entity_id = ?2 and entity_type = ?3 and owner = ?1 and commit_id = ?4", nativeQuery = true)
+    List<SharedFileInfo> findByCommit(String owner, Integer entityId, String entityType, String commitId);
+
     @Modifying
     @Transactional
     @Query(value = "delete from shared_file where entity_id = ?2 and entity_type = ?3 and owner = ?1", nativeQuery = true)
