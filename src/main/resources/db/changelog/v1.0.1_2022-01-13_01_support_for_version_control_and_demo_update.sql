@@ -16,8 +16,8 @@ CREATE TABLE `cell_commit` (
   KEY `idx_commit` (`notebook_id`,`commit_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-DROP TABLE IF EXISTS `demo_info`;
-CREATE TABLE `demo_info` (
+DROP TABLE IF EXISTS `shared_file`;
+CREATE TABLE `shared_file` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `owner` varchar(255) DEFAULT NULL,
   `entity_id` int(11) DEFAULT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE `demo_info` (
   `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_entity` (`entity_id`,`entity_type`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `node_commit`;
 CREATE TABLE `node_commit` (
